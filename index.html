@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Copyright 2023 - Marios S. Kyriakou KIOS Research Center of Excellence -->
+  <script src="options.js"></script>
+  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- Bootstrap CSS -->
+    <!-- Bootstrap Multiselect CSS -->
+    <link rel="stylesheet" href="https://cdn.rawgit.com/davidstutz/bootstrap-multiselect/master/dist/css/bootstrap-multiselect.css">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+	<style>
+		label, select {
+			display: block;
+			margin-bottom: 10px;
+		}
+		input[type="text"] {
+			width: 100%;
+			padding: 10px;
+			margin-bottom: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			box-sizing: border-box;
+		}
+		#searchInput {
+			width: 100%;
+			padding: 10px;
+			margin-bottom: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			box-sizing: border-box;
+		}
+		
+		
+		
+		/* Basic styles for the combobox container */
+.combobox-container {
+  position: relative;
+}
+
+/* Basic styles for the combobox */
+.combobox {
+  display: inline-block;
+  position: relative;
+  width: 200px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* Styles for the combobox toggle */
+.combobox-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* Styles for the selected items in the combobox */
+.selected-items {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Styles for the icon in the combobox toggle */
+.combobox-toggle i {
+  font-size: 12px;
+}
+
+/* Styles for the combobox dropdown */
+.combobox-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 999;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles for the checkbox list in the combobox dropdown */
+.checkbox-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Styles for the checkboxes in the combobox dropdown */
+.checkbox-list input[type="checkbox"] {
+  display: none;
+}
+
+/* Styles for the checkbox labels in the combobox dropdown */
+.checkbox-list label {
+  display: block;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* Styles for the checked checkboxes in the combobox dropdown */
+.checkbox-list input[type="checkbox"]:checked + label {
+  background-color: #f1f1f1;
+}
+
+select {
+  width: 100%; /* make the dropdown span the full width of its container */
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  font-family: inherit;
+  background-color: #fff;
+  color: #555;
+  appearance: none; /* remove the default appearance */
+}
+
+select:focus {
+  outline: none; /* remove the focus outline */
+  border-color: #007bff; /* add a custom border color when focused */
+}
+
+.btn-custom {
+width: 100%;
+  border-radius: 10px;
+  font-size: 18px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+	</style>
+</head>
+<body>
+<!-- Modal -->
+<div class="modal fade" id="alert_message_p" tabindex="-1" role="dialog" aria-labelledby="alert_message_pLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alert_message_pLabel"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Loading...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h1></h1>
+    <div class="row justify-content-center">
+        <div class="col-sm-6 mb-3">
+            <label for="template_gpt"><a href="https://github.com/Mariosmsk/templateGPT" target="_blank">GitHub templateGPT</a></label>
+            <label for="openai_key">OpenAI API key: (<a href="https://platform.openai.com/account/api-keys" target="_blank">https://platform.openai.com/account/api-keys</a>)</label>
+            <input type="text" id="openai_key" name="openai_key" placeholder="Enter your OpenAI API key...">
+
+            <label for="question" class="form-label">Select a single category or multiple categories:</label>
+            <input type="text" class="form-control" id="searchInput" onkeyup="searchDropdown()" placeholder="Search...">
+            <select id="question" class="form-select" multiple size="15">
+            </select>
+
+            <button type="button" class="btn btn-primary btn-lg btn-custom" data-toggle="modal" data-target="#alert_message_p" onclick="generateResponseOpenAI()">Generate Response</button>
+        </div>
+    </div>
+</div>
+
+    <script>
+
+		// Wait for the page to load
+		window.onload = function() {
+		  // Extract the values
+		  var select = document.getElementById('question');
+		  for (var i = 0; i < values.length; i++) {
+			var option = document.createElement('option');
+			option.value = values[i];
+			option.text = values[i];
+			select.appendChild(option);
+		  }
+
+		  // Set the page title
+		  var pageTitle = title;
+		  document.title = pageTitle;
+		  var container = document.querySelector(".container");
+		  var heading = container.querySelector("h1");
+		  heading.textContent = pageTitle;
+		  var element = document.getElementById("alert_message_pLabel");
+		  element.textContent = pageTitle;
+		};
+		  
+	   function searchDropdown() {
+		  // Get the search input element and the dropdown element
+		  let input = document.getElementById("searchInput");
+		  let dropdown = document.getElementById("question");
+		  
+		  // Get the search term entered by the user
+		  let term = input.value.toLowerCase();
+		  
+		  // Loop through the options in the dropdown and hide/show them based on the search term
+		  for (let i = 0; i < dropdown.options.length; i++) {
+			let option = dropdown.options[i];
+			let text = option.text.toLowerCase();
+			if (text.includes(term)) {
+			  option.style.display = "";
+			} else {
+			  option.style.display = "none";
+			}
+		  }
+		}
+	  
+
+      function generateResponseOpenAI() {
+		  
+		// const  model_name = document.getElementById("model").value;
+		const question = document.getElementById("question").value;
+		const openai_key = document.getElementById("openai_key").value;
+		
+		if (openai_key == "") {
+			// Get the modal element
+			var modal = document.getElementById("alert_message_p");
+			// Set the message text
+			// responseText.replace(/\n/g, "");
+			var message = 'OpenAI key is empty!';
+			var modalBody = modal.querySelector(".modal-body");
+			modalBody.innerText = message;
+	  
+			// Show the modal
+			modal.style.display = "block";
+			return
+		}
+
+		  var selectedValues = [];
+		  var options = document.getElementById("question").options;
+		  for (var i = 0; i < options.length; i++) {
+			if (options[i].selected) {
+			  selectedValues.push(options[i].value);
+			}
+		  }
+		var joinedValues = selectedValues.join(' and ');
+
+		const prompt = {
+          model: model_name,
+          prompt: main_prompt + joinedValues,
+          temperature: 0.9,
+          max_tokens: 4000,
+          top_p: 1,
+          frequency_penalty: 0,
+          presence_penalty: 0.6,
+          stop: [" Human:", " AI:"]
+        };
+		
+		
+        fetch('https://api.openai.com/v1/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + openai_key
+            },
+            body: JSON.stringify(prompt)
+          })
+          .then(response => response.json())
+          .then(data => {
+            const responseText = data.choices[0].text;
+            
+					// Get the modal element
+					var modal = document.getElementById("alert_message_p");
+					
+					// Set the message text
+					var message = responseText.replace(/\n/g, "");
+					// responseText.trim();
+					var modalBody = modal.querySelector(".modal-body");
+					modalBody.innerText = message;
+			  
+					// Show the modal
+					modal.style.display = "block";
+		
+          })
+          .catch(error => console.error(error));
+		  
+      }
+    </script>
+	
+	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+	<!-- Bootstrap JS -->
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+</html>
